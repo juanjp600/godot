@@ -496,6 +496,71 @@ namespace Godot.Collections
         private static Dictionary<TKey, TValue> FromVariantFunc(in godot_variant variant) =>
             VariantUtils.ConvertToDictionary<TKey, TValue>(variant);
 
+        private void SetTypedForUnderlyingDict()
+        {
+            if (Count > 0) { return; }
+
+            var self = (godot_dictionary)NativeValue;
+
+            godot_bool isTypedKey = NativeFuncs.godotsharp_dictionary_is_typed_key(ref self);
+            godot_bool isTypedValue = NativeFuncs.godotsharp_dictionary_is_typed_value(ref self);
+
+            if (isTypedKey == godot_bool.True || isTypedValue == godot_bool.True) { return; }
+
+            static void GetMarshalTypeInfo(
+                Type type,
+                out uint outVariantType,
+                out godot_ref outScript)
+            {
+                Variant.Type variantType = GD.TypeToVariantType(type);
+
+                if (variantType != Variant.Type.Object)
+                {
+                    outVariantType = (uint)variantType;
+                    outScript = default;
+                    return;
+                }
+
+                godot_ref scriptRef = default;
+
+                unsafe
+                {
+                    Godot.Bridge.ScriptManagerBridge.GetOrLoadOrCreateScriptForType(type, &scriptRef);
+                }
+
+                outVariantType = (uint)variantType;
+                outScript = scriptRef;
+            }
+
+            GetMarshalTypeInfo(typeof(TKey), out var keyVariantType, out var keyScriptRef);
+            GetMarshalTypeInfo(typeof(TValue), out var valueVariantType, out var valueScriptRef);
+
+            StringName keyClassName = GodotObject.InternalGetClassNativeBaseName<TKey>() ?? "";
+            StringName valueClassName = GodotObject.InternalGetClassNativeBaseName<TValue>() ?? "";
+
+            godot_string_name keyClassNameNative = (godot_string_name)keyClassName.NativeValue;
+            NativeFuncs.godotsharp_ref_to_var(ref keyScriptRef, out godot_variant keyScriptVariant);
+            godot_string_name valueClassNameNative = (godot_string_name)valueClassName.NativeValue;
+            NativeFuncs.godotsharp_ref_to_var(ref valueScriptRef, out godot_variant valueScriptVariant);
+
+            using (keyClassName)
+            using (valueClassName)
+            using (keyScriptRef)
+            using (valueScriptRef)
+            using (keyScriptVariant)
+            using (valueScriptVariant)
+            {
+                NativeFuncs.godotsharp_dictionary_set_typed(
+                    ref self,
+                    keyVariantType,
+                    keyClassNameNative,
+                    keyScriptVariant,
+                    valueVariantType,
+                    valueClassNameNative,
+                    valueScriptVariant);
+            }
+        }
+
         static unsafe Dictionary()
         {
             VariantUtils.GenericConversion<Dictionary<TKey, TValue>>.ToVariantCb = &ToVariantFunc;
@@ -519,6 +584,7 @@ namespace Godot.Collections
         public Dictionary()
         {
             _underlyingDict = new Dictionary();
+            SetTypedForUnderlyingDict();
         }
 
         /// <summary>
@@ -535,6 +601,7 @@ namespace Godot.Collections
                 throw new ArgumentNullException(nameof(dictionary));
 
             _underlyingDict = new Dictionary();
+            SetTypedForUnderlyingDict();
 
             foreach (KeyValuePair<TKey, TValue> entry in dictionary)
                 Add(entry.Key, entry.Value);
@@ -554,6 +621,7 @@ namespace Godot.Collections
                 throw new ArgumentNullException(nameof(dictionary));
 
             _underlyingDict = dictionary;
+            SetTypedForUnderlyingDict();
         }
 
         // Explicit name to make it very clear

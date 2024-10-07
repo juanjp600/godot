@@ -91,6 +91,7 @@ StringBuilder &operator<<(StringBuilder &r_sb, const char *p_cstring) {
 #define CS_METHOD_INVOKE_GODOT_CLASS_METHOD "InvokeGodotClassMethod"
 #define CS_METHOD_HAS_GODOT_CLASS_METHOD "HasGodotClassMethod"
 #define CS_METHOD_HAS_GODOT_CLASS_SIGNAL "HasGodotClassSignal"
+#define CS_METHOD_GET_NATIVE_BASE_CLASS_NAME "InternalGetClassNativeBaseName"
 
 #define CS_STATIC_FIELD_NATIVE_CTOR "NativeCtor"
 #define CS_STATIC_FIELD_METHOD_BIND_PREFIX "MethodBind"
@@ -1802,6 +1803,96 @@ Error BindingsGenerator::generate_cs_core_project(const String &p_proj_dir) {
 		}
 
 		compile_items.push_back(constructors_file);
+	}
+
+	// Generate source file for InternalGetClassNativeBaseName
+	{
+		StringBuilder cs_internal_get_class_native_base_content;
+
+		cs_internal_get_class_native_base_content.append("#nullable enable\n\n");
+		cs_internal_get_class_native_base_content.append("namespace " BINDINGS_NAMESPACE ";\n\n");
+
+		cs_internal_get_class_native_base_content.append("using System.Runtime.CompilerServices;\n\n");
+
+		cs_internal_get_class_native_base_content.append("public partial class GodotObject\n{\n");
+
+		cs_internal_get_class_native_base_content.append(INDENT1 "[MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]");
+		cs_internal_get_class_native_base_content.append(MEMBER_BEGIN "internal static string? " CS_METHOD_GET_NATIVE_BASE_CLASS_NAME "<[MustBeVariant] T>()\n");
+		cs_internal_get_class_native_base_content.append(INDENT1 OPEN_BLOCK);
+
+		// Types must be ordered from most-derived to least-derived, otherwise the method will return names that are too far up the inheritance tree
+		Vector<StringName> types_derived_first_names;
+
+		for (const KeyValue<StringName, TypeInterface> &E : obj_types) {
+			const TypeInterface &itype = E.value;
+
+			if (types_derived_first_names.find(itype.name) != -1) {
+				continue;
+			}
+
+			Vector<StringName> inheritance_chain;
+			inheritance_chain.push_back(itype.name);
+
+			while (true)
+			{
+				const TypeInterface &top_type = obj_types[*--inheritance_chain.end()];
+
+				if (top_type.base_name == StringName()) {
+					types_derived_first_names.append_array(inheritance_chain);
+					break;
+				}
+
+				int base_class_idx = types_derived_first_names.find(top_type.base_name);
+
+				if (base_class_idx != -1) {
+					for (int i = 0; i < inheritance_chain.size(); i++) {
+						types_derived_first_names.insert(base_class_idx + i, inheritance_chain[i]);
+					}
+					break;
+				}
+
+				inheritance_chain.push_back(top_type.base_name);
+			}
+		}
+
+		for (const StringName &name : types_derived_first_names) {
+			const TypeInterface &itype = obj_types[name];
+
+			if (itype.api_type != ClassDB::API_CORE || itype.is_singleton_instance) {
+				continue;
+			}
+
+			if (itype.is_deprecated) {
+				cs_internal_get_class_native_base_content.append("#pragma warning disable CS0618\n");
+			}
+
+			cs_internal_get_class_native_base_content.append(INDENT2 "if (typeof(");
+			cs_internal_get_class_native_base_content.append(itype.proxy_name);
+			cs_internal_get_class_native_base_content.append(").IsAssignableFrom(typeof(T)))\n");
+			cs_internal_get_class_native_base_content.append(INDENT2 OPEN_BLOCK);
+			cs_internal_get_class_native_base_content.append(INDENT3 "return \"");
+			cs_internal_get_class_native_base_content.append(itype.name);
+			cs_internal_get_class_native_base_content.append("\";\n");
+			cs_internal_get_class_native_base_content.append(INDENT2 CLOSE_BLOCK);
+
+			if (itype.is_deprecated) {
+				cs_internal_get_class_native_base_content.append("#pragma warning restore CS0618\n");
+			}
+		}
+
+		cs_internal_get_class_native_base_content.append(INDENT2 "return null;\n");
+		cs_internal_get_class_native_base_content.append(INDENT1 CLOSE_BLOCK);
+
+		cs_internal_get_class_native_base_content.append(CLOSE_BLOCK);
+
+		String internal_get_class_native_base_content_file = path::join(base_gen_dir, "GodotObject." CS_METHOD_GET_NATIVE_BASE_CLASS_NAME ".cs");
+		Error err = _save_file(internal_get_class_native_base_content_file, cs_internal_get_class_native_base_content);
+
+		if (err != OK) {
+			return err;
+		}
+
+		compile_items.push_back(internal_get_class_native_base_content_file);
 	}
 
 	// Generate native calls
