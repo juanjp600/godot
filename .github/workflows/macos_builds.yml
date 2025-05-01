@@ -54,6 +54,11 @@ jobs:
         run: |
           sh misc/scripts/install_vulkan_sdk_macos.sh
 
+      - name: Force remove preinstalled .NET SDKs
+        if: matrix.build-mono
+        run: |
+          rm -rf ~/.dotnet/sdk/*
+
       - name: Setup older .NET SDK as baseline
         if: matrix.build-mono
         uses: actions/setup-dotnet@v4
