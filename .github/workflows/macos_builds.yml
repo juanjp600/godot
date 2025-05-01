@@ -22,7 +22,7 @@ jobs:
             target: editor
             tests: true
             sconsflags: module_mono_enabled=yes
-            bin: ./bin/godot.macos.editor.universal.mono
+            bin: ./bin/godot.macos.editor.universal
             build-mono: true
             cache-limit: 1
 
@@ -31,7 +31,7 @@ jobs:
             target: template_release
             tests: true
             sconsflags: debug_symbols=no module_mono_enabled=yes
-            bin: ./bin/godot.macos.template_release.universal.mono
+            bin: ./bin/godot.macos.template_release.universal
             build-mono: false
             cache-limit: 1
 
@@ -114,3 +114,8 @@ jobs:
           ${{ matrix.bin }} --version
           ${{ matrix.bin }} --help
           ${{ matrix.bin }} --test --force-colors
+
+      - name: .NET source generators tests
+        if: matrix.build-mono
+        run: |
+          dotnet test modules/mono/editor/Godot.NET.Sdk/Godot.SourceGenerators.Tests

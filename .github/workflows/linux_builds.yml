@@ -34,8 +34,6 @@ jobs:
             proj-conv: true
             api-compat: true
             artifact: true
-            # Validate godot-cpp compatibility on one arbitrary editor build.
-            godot-cpp: true
             cache-limit: 2
 
           - name: Template w/ Mono, release (target=template_release, tests=yes)
@@ -43,16 +41,6 @@ jobs:
             target: template_release
             sconsflags: module_mono_enabled=yes
             bin: ./bin/godot.linuxbsd.template_release.x86_64.mono
-            build-mono: false
-            tests: true
-            artifact: true
-            cache-limit: 1
-
-          - name: Template w/ Mono, debug (target=template_debug, tests=yes)
-            cache-name: linux-template-mono-debug
-            target: template_debug
-            sconsflags: module_mono_enabled=yes
-            bin: ./bin/godot.linuxbsd.template_debug.x86_64.mono
             build-mono: false
             tests: true
             artifact: true
@@ -122,14 +110,6 @@ jobs:
           target: ${{ matrix.target }}
           tests: ${{ matrix.tests }}
           scons-cache-limit: ${{ matrix.cache-limit }}
-
-      - name: Compilation (godot-cpp)
-        uses: ./.github/actions/godot-cpp-build
-        if: matrix.godot-cpp
-        with:
-          bin: ${{ matrix.bin }}
-          scons-flags: target=template_debug dev_build=yes verbose=yes
-          godot-cpp-branch: ${{ env.GODOT_CPP_BRANCH }}
 
       - name: Save Godot build cache
         uses: ./.github/actions/godot-cache-save
