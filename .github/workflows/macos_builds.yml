@@ -17,19 +17,22 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - name: Editor (target=editor, tests=yes)
-            cache-name: macos-editor
+          - name: Editor w/ Mono (target=editor, tests=yes)
+            cache-name: macos-editor-mono
             target: editor
             tests: true
-            bin: ./bin/godot.macos.editor.universal
+            sconsflags: module_mono_enabled=yes
+            bin: ./bin/godot.macos.editor.universal.mono
+            build-mono: true
             cache-limit: 1
 
           - name: Template (target=template_release, tests=yes)
             cache-name: macos-template
             target: template_release
             tests: true
-            sconsflags: debug_symbols=no
-            bin: ./bin/godot.macos.template_release.universal
+            sconsflags: debug_symbols=no module_mono_enabled=yes
+            bin: ./bin/godot.macos.template_release.universal.mono
+            build-mono: false
             cache-limit: 1
 
     steps:
@@ -50,6 +53,13 @@ jobs:
       - name: Setup Vulkan SDK
         run: |
           sh misc/scripts/install_vulkan_sdk_macos.sh
+
+      - name: Setup older .NET SDK as baseline
+        if: matrix.build-mono
+        uses: actions/setup-dotnet@v4
+        with:
+          # Targeting the oldest version we want to support to ensure it still builds.
+          dotnet-version: '8.0.100'
 
       - name: Compilation (x86_64)
         uses: ./.github/actions/godot-build
@@ -74,6 +84,17 @@ jobs:
         with:
           cache-name: ${{ matrix.cache-name }}
         continue-on-error: true
+
+      - name: Generate C# glue
+        if: matrix.build-mono
+        run: |
+          ${{ matrix.bin }} --headless --generate-mono-glue ./modules/mono/glue
+
+      - name: Build .NET solutions
+        if: matrix.build-mono
+        run: |
+          dotnet --info
+          ./modules/mono/build_scripts/build_assemblies.py --godot-output-dir=./bin --godot-platform=macos
 
       - name: Prepare artifact
         run: |
