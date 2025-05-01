@@ -22,7 +22,7 @@ jobs:
             target: editor
             tests: true
             sconsflags: module_mono_enabled=yes
-            bin: ./bin/godot.macos.editor.universal
+            bin: ./bin/godot.macos.editor.universal.mono
             build-mono: true
             cache-limit: 1
 
@@ -31,7 +31,7 @@ jobs:
             target: template_release
             tests: true
             sconsflags: debug_symbols=no module_mono_enabled=yes
-            bin: ./bin/godot.macos.template_release.universal
+            bin: ./bin/godot.macos.template_release.universal.mono
             build-mono: false
             cache-limit: 1
 
@@ -87,8 +87,8 @@ jobs:
 
       - name: Prepare artifact
         run: |
-          lipo -create ./bin/godot.macos.${{ matrix.target }}.x86_64 ./bin/godot.macos.${{ matrix.target }}.arm64 -output ./bin/godot.macos.${{ matrix.target }}.universal
-          rm ./bin/godot.macos.${{ matrix.target }}.x86_64 ./bin/godot.macos.${{ matrix.target }}.arm64
+          lipo -create ./bin/godot.macos.${{ matrix.target }}.x86_64.mono ./bin/godot.macos.${{ matrix.target }}.arm64 -output ./bin/godot.macos.${{ matrix.target }}.universal.mono
+          rm ./bin/godot.macos.${{ matrix.target }}.x86_64.mono ./bin/godot.macos.${{ matrix.target }}.arm64.mono
           strip bin/godot.*
           chmod +x bin/godot.*
 
