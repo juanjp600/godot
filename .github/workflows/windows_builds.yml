@@ -62,8 +62,7 @@ jobs:
       - name: Force remove preinstalled .NET SDKs
         if: matrix.build-mono
         run: |
-          runas /user:Administrator cmd
-          rmdir "C:/Program Files/dotnet/sdk" /s /q
+          Remove-Item -Path "C:/Program Files/dotnet/sdk" -Force -Recurse
 
       - name: Setup older .NET SDK as baseline
         if: matrix.build-mono
