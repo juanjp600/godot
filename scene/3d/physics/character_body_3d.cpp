@@ -29,6 +29,7 @@
 /**************************************************************************/
 
 #include "character_body_3d.h"
+#include "rigid_body_3d.h"
 
 //so, if you pass 45 as limit, avoid numerical precision errors when angle is 45.
 #define FLOOR_ANGLE_THRESHOLD 0.01
@@ -607,6 +608,11 @@ void CharacterBody3D::_set_collision_direction(const PhysicsServer3D::MotionResu
 }
 
 void CharacterBody3D::_set_platform_data(const PhysicsServer3D::MotionCollision &p_collision) {
+	const RigidBody3D *rigid_body = Object::cast_to<RigidBody3D>(ObjectDB::get_instance(p_collision.collider_id));
+	if (rigid_body != nullptr && !rigid_body->is_freeze_enabled()) {
+		return;
+	}
+
 	platform_rid = p_collision.collider;
 	platform_object_id = p_collision.collider_id;
 	platform_velocity = p_collision.collider_velocity;
