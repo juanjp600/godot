@@ -136,6 +136,12 @@ struct [[nodiscard]] Vector4i {
 
 	_FORCE_INLINE_ Vector4i() {}
 	Vector4i(const Vector4 &p_vec4);
+	explicit _FORCE_INLINE_ Vector4i(int32_t p_v) {
+		x = p_v;
+		y = p_v;
+		z = p_v;
+		w = p_v;
+	}
 	_FORCE_INLINE_ Vector4i(int32_t p_x, int32_t p_y, int32_t p_z, int32_t p_w) {
 		x = p_x;
 		y = p_y;

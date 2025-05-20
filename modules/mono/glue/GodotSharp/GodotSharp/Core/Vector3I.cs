@@ -407,6 +407,17 @@ namespace Godot
         public static Vector3I Back { get { return _back; } }
 
         /// <summary>
+        /// Constructs a new <see cref="Vector3I"/> with all components set to the given value.
+        /// </summary>
+        /// <param name="v">The value for all components.</param>
+        public Vector3I(int v)
+        {
+            X = v;
+            Y = v;
+            Z = v;
+        }
+
+        /// <summary>
         /// Constructs a new <see cref="Vector3I"/> with the given components.
         /// </summary>
         /// <param name="x">The vector's X component.</param>

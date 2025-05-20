@@ -373,6 +373,16 @@ namespace Godot
         public static Vector2I Left { get { return _left; } }
 
         /// <summary>
+        /// Constructs a new <see cref="Vector2I"/> with all components set to the given value.
+        /// </summary>
+        /// <param name="v">The value for all components.</param>
+        public Vector2I(int v)
+        {
+            X = v;
+            Y = v;
+        }
+
+        /// <summary>
         /// Constructs a new <see cref="Vector2I"/> with the given components.
         /// </summary>
         /// <param name="x">The vector's X component.</param>

@@ -405,6 +405,18 @@ namespace Godot
         public static Vector4I One { get { return _one; } }
 
         /// <summary>
+        /// Constructs a new <see cref="Vector4I"/> with all components set to the given value.
+        /// </summary>
+        /// <param name="v">The value for all components.</param>
+        public Vector4I(int v)
+        {
+            X = v;
+            Y = v;
+            Z = v;
+            W = v;
+        }
+
+        /// <summary>
         /// Constructs a new <see cref="Vector4I"/> with the given components.
         /// </summary>
         /// <param name="x">The vector's X component.</param>
