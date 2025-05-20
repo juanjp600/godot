@@ -188,6 +188,8 @@ struct [[nodiscard]] Vector2 {
 	// NOLINTBEGIN(cppcoreguidelines-pro-type-member-init)
 	constexpr Vector2() :
 			x(0), y(0) {}
+	explicit constexpr Vector2(real_t p_v) :
+			x(p_v), y(p_v) {}
 	constexpr Vector2(real_t p_x, real_t p_y) :
 			x(p_x), y(p_y) {}
 	// NOLINTEND(cppcoreguidelines-pro-type-member-init)

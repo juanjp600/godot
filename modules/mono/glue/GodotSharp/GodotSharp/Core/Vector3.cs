@@ -908,6 +908,17 @@ namespace Godot
         public static Vector3 ModelRear { get { return _modelRear; } }
 
         /// <summary>
+        /// Constructs a new <see cref="Vector3"/> with all components set to the given value.
+        /// </summary>
+        /// <param name="v">The value for all components.</param>
+        public Vector3(real_t v)
+        {
+            X = v;
+            Y = v;
+            Z = v;
+        }
+
+        /// <summary>
         /// Constructs a new <see cref="Vector3"/> with the given components.
         /// </summary>
         /// <param name="x">The vector's X component.</param>

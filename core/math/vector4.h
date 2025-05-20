@@ -148,6 +148,8 @@ struct [[nodiscard]] Vector4 {
 
 	constexpr Vector4() :
 			x(0), y(0), z(0), w(0) {}
+	explicit constexpr Vector4(real_t p_v) :
+			x(p_v), y(p_v), z(p_v), w(p_v) {}
 	constexpr Vector4(real_t p_x, real_t p_y, real_t p_z, real_t p_w) :
 			x(p_x), y(p_y), z(p_z), w(p_w) {}
 };

@@ -145,6 +145,8 @@ struct [[nodiscard]] Vector2i {
 	// NOLINTBEGIN(cppcoreguidelines-pro-type-member-init)
 	constexpr Vector2i() :
 			x(0), y(0) {}
+	explicit constexpr Vector2i(int32_t p_v) :
+			x(p_v), y(p_v) {}
 	constexpr Vector2i(int32_t p_x, int32_t p_y) :
 			x(p_x), y(p_y) {}
 	// NOLINTEND(cppcoreguidelines-pro-type-member-init)

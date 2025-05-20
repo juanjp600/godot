@@ -135,6 +135,8 @@ struct [[nodiscard]] Vector3i {
 
 	constexpr Vector3i() :
 			x(0), y(0), z(0) {}
+	explicit constexpr Vector3i(int32_t p_v) :
+			x(p_v), y(p_v), z(p_v) {}
 	constexpr Vector3i(int32_t p_x, int32_t p_y, int32_t p_z) :
 			x(p_x), y(p_y), z(p_z) {}
 };
