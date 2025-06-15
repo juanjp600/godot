@@ -88,33 +88,21 @@ const char_t *get_data(const HostFxrCharString &p_char_str) {
 	return (const char_t *)p_char_str.get_data();
 }
 
-#ifndef TOOLS_ENABLED
-String find_hostfxr_self_contained() {
-#if defined(WINDOWS_ENABLED)
-	String probe_path = GodotSharpDirs::get_api_assemblies_dir()
-								.path_join("hostfxr.dll");
-#elif defined(MACOS_ENABLED)
-	String probe_path = GodotSharpDirs::get_api_assemblies_dir()
-								.path_join("libhostfxr.dylib");
-#elif defined(UNIX_ENABLED)
-	String probe_path = GodotSharpDirs::get_api_assemblies_dir()
-								.path_join("libhostfxr.so");
-#else
-#error "Platform not supported (yet?)"
-#endif
-
-	if (FileAccess::exists(probe_path)) {
-		return probe_path;
-	}
-
-	return String();
-}
-#endif
-
 String find_hostfxr() {
 	String fxr_path;
 #ifndef TOOLS_ENABLED
-	fxr_path = find_hostfxr_self_contained();
+#if defined(WINDOWS_ENABLED)
+	fxr_path = GodotSharpDirs::get_api_assemblies_dir()
+					   .path_join("hostfxr.dll");
+#elif defined(MACOS_ENABLED)
+	fxr_path = GodotSharpDirs::get_api_assemblies_dir()
+					   .path_join("libhostfxr.dylib");
+#elif defined(UNIX_ENABLED)
+	fxr_path = GodotSharpDirs::get_api_assemblies_dir()
+					   .path_join("libhostfxr.so");
+#else
+#error "Platform not supported (yet?)"
+#endif
 
 	if (!fxr_path.is_empty()) {
 		return fxr_path;
