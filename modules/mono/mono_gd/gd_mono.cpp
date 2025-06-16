@@ -38,6 +38,7 @@
 #include "../utils/path_utils.h"
 #include "gd_mono_cache.h"
 #include "hostfxr_resolver.h"
+#include "semver.h"
 
 #include "core/config/project_settings.h"
 #include "core/debugger/engine_debugger.h"
@@ -88,6 +89,79 @@ const char_t *get_data(const HostFxrCharString &p_char_str) {
 	return (const char_t *)p_char_str.get_data();
 }
 
+bool try_get_path_from_dotnet_command_line(String &r_path, const String &p_arg, int p_version_str_index, int p_path_str_index) {
+	String pipe;
+	List<String> args;
+	args.push_back(p_arg);
+
+	int exitcode;
+	Error err = OS::get_singleton()->execute("dotnet", args, &pipe, &exitcode, true);
+
+	ERR_FAIL_COND_V_MSG(err != OK, false, String(".NET failed to get list of installations with \"") + p_arg + String("\". Error: ") + error_names[err]);
+	ERR_FAIL_COND_V_MSG(exitcode != 0, false, pipe);
+
+	Vector<String> results = pipe.strip_edges().replace("\r\n", "\n").split("\n", false);
+
+	godotsharp::SemVerParser sem_ver_parser;
+
+	godotsharp::SemVer latest_version;
+	String latest_path;
+
+	for (const String &result : results) {
+		String version_string = result.get_slice(" ", p_version_str_index);
+		String path = result.get_slice(" ", p_path_str_index);
+		// The format of the paths is [/usr/share/dotnet/...]
+		path = path.substr(1, path.length() - 2);
+
+		godotsharp::SemVer version;
+		if (!sem_ver_parser.parse(version_string, version)) {
+			WARN_PRINT("Unable to parse .NET version '" + version_string + "'.");
+			continue;
+		}
+
+		if (!DirAccess::exists(path)) {
+			WARN_PRINT("Found .NET version '" + version_string + "' with invalid path '" + path + "'.");
+			continue;
+		}
+
+		if (version > latest_version) {
+			latest_version = version;
+			latest_path = std::move(path);
+		}
+	}
+
+	if (!latest_path.is_empty()) {
+		r_path = std::move(latest_path);
+		return true;
+	}
+
+	return false;
+}
+
+bool try_get_dotnet_root_from_command_line(String &r_dotnet_root) {
+	String path;
+
+	// The format of the SDK lines is:
+	// 8.0.401 [/usr/share/dotnet/sdk]
+	if (try_get_path_from_dotnet_command_line(path, "--list-sdks", 0, 1)) {
+		print_verbose("Found .NET SDK at " + path);
+		// The `dotnet_root` is the parent directory.
+		r_dotnet_root = path.path_join("..").simplify_path();
+		return true;
+	}
+
+	// The format of the runtime lines is:
+	// Microsoft.NETCore.App 5.0.17 [/usr/share/dotnet/shared/Microsoft.NETCore.App]
+	if (try_get_path_from_dotnet_command_line(path, "--list-runtimes", 1, 2)) {
+		print_verbose("Found .NET runtime at " + path);
+		// The `dotnet_root` is the parent's parent directory.
+		r_dotnet_root = path.path_join("..").path_join("..").simplify_path();
+		return true;
+	}
+
+	return false;
+}
+
 String find_hostfxr() {
 	String fxr_path;
 #ifndef TOOLS_ENABLED
@@ -104,7 +178,7 @@ String find_hostfxr() {
 #error "Platform not supported (yet?)"
 #endif
 
-	if (!fxr_path.is_empty()) {
+	if (FileAccess::exists(fxr_path)) {
 		return fxr_path;
 	}
 #endif
@@ -114,23 +188,9 @@ String find_hostfxr() {
 		return fxr_path;
 	}
 
-	// hostfxr_resolver doesn't look for dotnet in `PATH`. If it fails, we try to find the dotnet
-	// executable in `PATH` here and pass its location as `dotnet_root` to `get_hostfxr_path`.
-	String dotnet_exe = path::find_executable("dotnet");
-
-	if (!dotnet_exe.is_empty()) {
-		// The file found in PATH may be a symlink
-		dotnet_exe = path::abspath(path::realpath(dotnet_exe));
-
-		// TODO:
-		// Sometimes, the symlink may not point to the dotnet executable in the dotnet root.
-		// That's the case with snaps. The snap install should have been found with the
-		// previous `get_hostfxr_path`, but it would still be better to do this properly
-		// and use something like `dotnet --list-sdks/runtimes` to find the actual location.
-		// This way we could also check if the proper sdk or runtime is installed. This would
-		// allow us to fail gracefully and show some helpful information in the editor.
-
-		dotnet_root = dotnet_exe.get_base_dir();
+	// hostfxr_resolver doesn't look for dotnet in `PATH`. If it fails, we try to use the dotnet
+	// executable in `PATH` to find the `dotnet_root` and get the `hostfxr_path` from there.
+	if (try_get_dotnet_root_from_command_line(dotnet_root)) {
 		if (godotsharp::hostfxr_resolver::try_get_path_from_dotnet_root(dotnet_root, fxr_path)) {
 			return fxr_path;
 		}
