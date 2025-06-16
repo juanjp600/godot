@@ -108,8 +108,9 @@ bool try_get_path_from_dotnet_command_line(String &r_path, const String &p_arg, 
 	String latest_path;
 
 	for (const String &result : results) {
-		String version_string = result.get_slice(" ", p_version_str_index);
-		String path = result.get_slice(" ", p_path_str_index);
+		Vector<String> split = result.split(" ", false, p_path_str_index);
+		String version_string = std::move(split[p_version_str_index]);
+		String path = std::move(split[p_path_str_index]);
 		// The format of the paths is [/usr/share/dotnet/...]
 		path = path.substr(1, path.length() - 2);
 
