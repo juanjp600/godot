@@ -88,7 +88,6 @@ private:
 	bool has_doc_tooltip = false;
 
 	int property_usage;
-
 	bool draw_label = true;
 	bool draw_background = true;
 	bool read_only = false;
@@ -526,6 +525,9 @@ class EditorInspector : public ScrollContainer {
 	VBoxContainer *favorites_groups_vbox = nullptr;
 	HSeparator *favorites_separator = nullptr;
 
+	//BSPPP
+	bool is_inspector_locked = false;
+	ObjectID locked_object_id;
 	EditorInspector *root_inspector = nullptr;
 
 	VBoxContainer *base_vbox = nullptr;
@@ -539,6 +541,7 @@ class EditorInspector : public ScrollContainer {
 
 	void _clear(bool p_hide_plugins = true);
 	Object *object = nullptr;
+	Object *selected_object = nullptr;
 	Object *next_object = nullptr;
 
 	//
@@ -596,7 +599,7 @@ class EditorInspector : public ScrollContainer {
 	void _property_pinned(const String &p_path, bool p_pinned);
 	bool _property_path_matches(const String &p_property_path, const String &p_filter, EditorPropertyNameProcessor::Style p_style);
 	bool _resource_properties_matches(const Ref<Resource> &p_resource, const String &p_filter);
-
+	void _on_locked_node_deleted();
 	void _resource_selected(const String &p_path, Ref<Resource> p_resource);
 	void _property_selected(const String &p_path, int p_focusable);
 	void _object_id_selected(const String &p_path, ObjectID p_id);
@@ -630,6 +633,9 @@ class EditorInspector : public ScrollContainer {
 
 	void _add_meta_confirm();
 	void _show_add_meta_dialog();
+
+	Button *Inspector_Lock_Button = nullptr;
+	void _toggle_lock();
 
 	void _handle_menu_option(int p_option);
 
