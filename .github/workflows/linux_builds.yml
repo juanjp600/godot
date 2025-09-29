@@ -154,7 +154,7 @@ jobs:
         if: matrix.target == 'template_release'
         with:
           name: godot-rl-hg-${{ env.sha_short }}-${{ matrix.cache-name }}
-          bin: template/*
+          path: template/*
 
       - name: Unit tests
         if: matrix.tests
