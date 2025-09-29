@@ -133,12 +133,28 @@ jobs:
         run: |
           strip bin/godot.*
           chmod +x bin/godot.*
+          echo "sha_short=$(git rev-parse --short "$GITHUB_SHA")" >> "$GITHUB_ENV"
 
-      - name: Upload artifact
+      - name: Upload editor artifact
         uses: ./.github/actions/upload-artifact
-        if: matrix.artifact
+        if: matrix.target == 'editor'
         with:
-          name: ${{ matrix.cache-name }}
+          name: godot-rl-hg-${{ env.sha_short }}-${{ matrix.cache-name }}
+
+      - name: Prepare template
+        if: matrix.target == 'template_release'
+        run: |
+          mkdir ./template
+          mkdir ./template/templates
+          cp ${{ matrix.bin }} ./template/templates/linux_release.x86_64
+          echo 4.4.dev.mono > ./template/templates/version.txt
+
+      - name: Upload template artifact
+        uses: ./.github/actions/upload-artifact
+        if: matrix.target == 'template_release'
+        with:
+          name: godot-rl-hg-${{ env.sha_short }}-${{ matrix.cache-name }}
+          bin: template/*
 
       - name: Unit tests
         if: matrix.tests
