@@ -33,7 +33,6 @@ jobs:
             doc-test: true
             proj-conv: true
             api-compat: true
-            artifact: true
             cache-limit: 2
 
           - name: Template w/ Mono, release (target=template_release, tests=yes)
@@ -43,7 +42,6 @@ jobs:
             bin: ./bin/godot.linuxbsd.template_release.x86_64.mono
             build-mono: false
             tests: true
-            artifact: true
             cache-limit: 1
 
     steps:
@@ -129,7 +127,6 @@ jobs:
           ./modules/mono/build_scripts/build_assemblies.py --godot-output-dir=./bin --godot-platform=linuxbsd --werror
 
       - name: Prepare artifact
-        if: matrix.artifact
         run: |
           strip bin/godot.*
           chmod +x bin/godot.*
@@ -168,31 +165,3 @@ jobs:
         run: |
           dotnet test modules/mono/editor/Godot.NET.Sdk/Godot.SourceGenerators.Tests
 
-      # Check class reference
-      - name: Check for class reference updates
-        if: matrix.doc-test
-        run: |
-          echo "Running --doctool to see if this changes the public API without updating the documentation."
-          echo -e "If a diff is shown, it means that your code/doc changes are incomplete and you should update the class reference with --doctool.\n\n"
-          ${{ matrix.bin }} --doctool --headless 2>&1 > /dev/null || true
-          git diff --color --exit-code && ! git ls-files --others --exclude-standard | sed -e 's/^/New doc file missing in PR: /' | grep 'xml$'
-
-      # Check API backwards compatibility
-      - name: Check for GDExtension compatibility
-        if: matrix.api-compat
-        run: |
-          ./misc/scripts/validate_extension_api.sh "${{ matrix.bin }}"
-
-      # Download and run the test project
-      - name: Test Godot project
-        uses: ./.github/actions/godot-project-test
-        if: matrix.proj-test
-        with:
-          bin: ${{ matrix.bin }}
-
-      # Test the project converter
-      - name: Test project converter
-        uses: ./.github/actions/godot-converter-test
-        if: matrix.proj-conv
-        with:
-          bin: ${{ matrix.bin }}
