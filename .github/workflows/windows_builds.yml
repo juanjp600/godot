@@ -37,6 +37,7 @@ jobs:
             tests: true
             sconsflags: debug_symbols=no module_mono_enabled=yes
             bin: ./bin/godot.windows.template_release.x86_64.mono.console.exe
+            bin2: ./bin/godot.windows.template_release.x86_64.mono.exe
             build-mono: false
             compiler: msvc
             cache-limit: 2
@@ -123,7 +124,8 @@ jobs:
         run: |
           New-Item -Path .  -Name "template" -ItemType "Directory"
           New-Item -Path ./template -name "templates" -ItemType "Directory"
-          Copy-Item -Path "${{ matrix.bin }}" -Destination "./template/templates/windows_release_x86_64.exe"
+          Copy-Item -Path "${{ matrix.bin }}" -Destination "./template/templates/windows_release_x86_64.console.exe"
+          Copy-Item -Path "${{ matrix.bin2 }}" -Destination "./template/templates/windows_release_x86_64.exe"
           "4.4.dev.mono" | Out-File -FilePath "./template/templates/version.txt"
 
       - name: Upload template artifact
