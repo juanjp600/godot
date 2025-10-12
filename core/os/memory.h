@@ -94,6 +94,9 @@ public:
 };
 
 constexpr size_t Memory::get_aligned_address(size_t p_address, size_t p_alignment) {
+	if (p_alignment <= 0) {
+		p_alignment = 1;
+	}
 	const size_t n_bytes_unaligned = p_address % p_alignment;
 	return (n_bytes_unaligned == 0) ? p_address : (p_address + p_alignment - n_bytes_unaligned);
 }
