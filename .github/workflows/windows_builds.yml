@@ -112,6 +112,7 @@ jobs:
       - name: Prepare artifact
         run: |
           Remove-Item bin/* -Include *.exp,*.lib,*.pdb -Force
+          "sha_short=$(git rev-parse --short "$env:GITHUB_SHA")" | Out-File -FilePath "$env:GITHUB_ENV" -Encoding utf8 -Append
 
       - name: Upload editor artifact
         uses: ./.github/actions/upload-artifact
@@ -127,7 +128,6 @@ jobs:
           Copy-Item -Path "${{ matrix.bin }}" -Destination "./template/templates/windows_release_x86_64.console.exe"
           Copy-Item -Path "${{ matrix.bin2 }}" -Destination "./template/templates/windows_release_x86_64.exe"
           "4.4.dev.mono" | Out-File -FilePath "./template/templates/version.txt"
-          "sha_short=$(git rev-parse --short "$GITHUB_SHA")" | Out-File -FilePath "$GITHUB_ENV" -Encoding utf8 -Append
 
       - name: Upload template artifact
         uses: ./.github/actions/upload-artifact
