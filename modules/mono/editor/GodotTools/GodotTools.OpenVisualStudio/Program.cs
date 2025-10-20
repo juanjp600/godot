@@ -62,8 +62,8 @@ namespace GodotTools.OpenVisualStudio
 
                 if (dte == null)
                 {
-                   Console.Error.WriteLine("Visual Studio not found");
-                   return 1;
+                    Console.Error.WriteLine("Visual Studio not found");
+                    return 1;
                 }
 
                 dte.UserControl = true;
