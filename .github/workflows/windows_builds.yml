@@ -37,6 +37,7 @@ jobs:
             tests: true
             sconsflags: debug_symbols=no module_mono_enabled=yes
             bin: ./bin/godot.windows.template_release.x86_64.mono.console.exe
+            bin2: ./bin/godot.windows.template_release.x86_64.mono.exe
             build-mono: false
             compiler: msvc
             cache-limit: 2
@@ -109,15 +110,31 @@ jobs:
           python ./modules/mono/build_scripts/build_assemblies.py --godot-output-dir=./bin --godot-platform=windows
 
       - name: Prepare artifact
-        if: matrix.compiler == 'msvc'
         run: |
           Remove-Item bin/* -Include *.exp,*.lib,*.pdb -Force
+          "sha_short=$(git rev-parse --short "$env:GITHUB_SHA")" | Out-File -FilePath "$env:GITHUB_ENV" -Encoding utf8 -Append
 
-      - name: Upload artifact
-        if: matrix.compiler == 'msvc'
+      - name: Upload editor artifact
         uses: ./.github/actions/upload-artifact
+        if: matrix.target == 'editor'
         with:
           name: ${{ matrix.cache-name }}
+
+      - name: Prepare template
+        if: matrix.target == 'template_release'
+        run: |
+          New-Item -Path .  -Name "template" -ItemType "Directory"
+          New-Item -Path ./template -name "templates" -ItemType "Directory"
+          Copy-Item -Path "${{ matrix.bin }}" -Destination "./template/templates/windows_release_x86_64.console.exe"
+          Copy-Item -Path "${{ matrix.bin2 }}" -Destination "./template/templates/windows_release_x86_64.exe"
+          "4.4.dev.mono" | Out-File -FilePath "./template/templates/version.txt"
+
+      - name: Upload template artifact
+        uses: ./.github/actions/upload-artifact
+        if: matrix.target == 'template_release'
+        with:
+          name: godot-rl-hg-${{ env.sha_short }}-${{ matrix.cache-name }}
+          path: template/*
 
       - name: Unit tests
         if: matrix.tests
