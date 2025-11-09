@@ -164,4 +164,3 @@ jobs:
         if: matrix.build-mono
         run: |
           dotnet test modules/mono/editor/Godot.NET.Sdk/Godot.SourceGenerators.Tests
-
